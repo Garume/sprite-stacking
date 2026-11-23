@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>かさね島</title>
+  <meta name="description" content="平らなドット絵を重ねてできた、小さな島。スクロールすると島が回り、輪切りが下から離れてまた重なり、建物がひとつずつ建っていきます。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='3' y='11' width='10' height='2' fill='%2380532f'/%3E%3Crect x='2' y='8' width='12' height='2' fill='%2362b04a'/%3E%3Crect x='7' y='2' width='2' height='5' fill='%23d4432f'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
+  <link rel="stylesheet" href="./css/site.css">
+  <script>document.documentElement.classList.add('js', ...(location.hash ? [] : ['at-cover']));</script>
+  <script type="module" src="./js/main.js" onerror="document.documentElement.classList.remove('js')"></script>
+</head>
+<body>
+  <a class="skip" href="#track">本文へ進む</a>
+
+  <header class="bar">
+    <a class="mark" href="#cover">かさね島</a>
+    <p class="count" aria-hidden="true"><span id="count-now">1</span> / <span id="count-total">8</span></p>
+    <nav aria-label="島の場所">
+      <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="places">場所</button>
+      <ul id="places">
+        <li><a href="#slices">しくみ</a></li>
+        <li><a href="#lighthouse">灯台</a></li>
+        <li><a href="#bakery">パン屋</a></li>
+        <li><a href="#sento">銭湯</a></li>
+        <li><a href="#shrine">神社</a></li>
+        <li><a href="#tree">町の木</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <noscript><p class="notice">島を描くには JavaScript が必要です。文章はこのまま読めます。</p></noscript>
+
+  <div class="stage" aria-hidden="true">
+    <canvas id="island"></canvas>
+  </div>
+
+  <main id="track">
+    <section class="stop" id="cover">
+      <div class="copy">
+        <h1 tabindex="-1">かさね島</h1>
+        <p class="dims" data-dims="land"></p>
+        <p class="lead">平らな絵を重ねてできた、小さな島です。スクロールすると島が回り、輪切りが下から離れてまた重なり、建物がひとつずつ建っていきます。</p>
+        <a class="btn" href="#slices">しくみを見る</a>
+      </div>
+    </section>
+
+    <section class="stop" id="slices">
+      <div class="copy">
+        <h2 tabindex="-1">ぜんぶ平らな絵</h2>
+        <p class="dims" data-dims="land"></p>
+        <p>いま離れて見えている1枚1枚が、島を水平に1ドットずつ切った絵です。下から順に1ドットずつ上へずらして重ねると立体に見え、全部を同じ角度だけ回すと島が回ります。</p>
+        <div class="actions">
+          <a class="btn" href="#lighthouse">灯台へ</a>
+          <button class="toggle" type="button" aria-pressed="false" aria-label="描く順番" data-show="order"><span><span class="long">描く</span>順番</span></button>
+          <button class="toggle" type="button" aria-pressed="false" aria-label="描く範囲" data-show="rim"><span><span class="long">描く</span>範囲</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="stop" id="lighthouse">
+      <div class="copy">
+        <h2 tabindex="-1">灯台</h2>
+        <p class="dims" data-dims="lighthouse"></p>
+        <p>岬の先に立つ、島でいちばん背の高い建物です。赤と白の帯は、輪切り10枚ごとに色を替えて作っています。</p>
+        <a class="btn" href="#bakery">パン屋へ</a>
+      </div>
+    </section>
+
+    <section class="stop" id="bakery">
+      <div class="copy">
+        <h2 tabindex="-1">パン屋</h2>
+        <p class="dims" data-dims="bakery"></p>
+        <p>青緑の屋根と、赤白のひさしが目印です。屋根は1枚上がるごとに幅を少しせばめて、斜面に見せています。</p>
+        <a class="btn" href="#sento">銭湯へ</a>
+      </div>
+    </section>
+
+    <section class="stop" id="sento">
+      <div class="copy">
+        <h2 tabindex="-1">銭湯</h2>
+        <p class="dims" data-dims="sento"></p>
+        <p>島でいちばん長い煙突は、同じ丸を70枚重ねただけ。入口には藍色ののれんが下がっています。</p>
+        <a class="btn" href="#shrine">神社へ</a>
+      </div>
+    </section>
+
+    <section class="stop" id="shrine">
+      <div class="copy">
+        <h2 tabindex="-1">神社</h2>
+        <p class="dims" data-dims="shrine"></p>
+        <p>丘の上にあり、石段をのぼって鳥居をくぐります。鳥居の柱は太さ4ドット。細すぎる柱は、回したときに消えたり現れたりします。</p>
+        <a class="btn" href="#tree">町の木へ</a>
+      </div>
+    </section>
+
+    <section class="stop" id="tree">
+      <div class="copy">
+        <h2 tabindex="-1">町の木</h2>
+        <p class="dims" data-dims="tree"></p>
+        <p>広場のまん中に立つ、みかんの木です。葉は大小6つの丸いかたまりを重ねた形で、根もとにベンチがひとつあります。</p>
+        <a class="btn" href="#end">ひとまわりを終える</a>
+      </div>
+    </section>
+
+    <section class="stop" id="end">
+      <div class="copy">
+        <h2 tabindex="-1">ひとまわり</h2>
+        <p>これで島の建物がそろいました。建物を押すと、その建物が建つ場面へもどります。</p>
+        <p class="credit">参考：<a href="https://github.com/danielwh2/sprite-stacking">sprite-stacking</a>（Daniel White）</p>
+        <a class="btn" href="#cover">最初にもどる</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

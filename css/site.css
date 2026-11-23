@@ -1,0 +1,248 @@
+/* かさね島
+   画面は静かに、色は島だけに。余白は 4px の倍数、文字は2書体・太さ 400 と 500。 */
+
+:root {
+  --bg: #f1f5f6;
+  --card: #ffffff;
+  --raised: #e4ebee;
+  --text: #14212b;
+  --button-hover: #24343f; /* 濃いボタンに触れたとき */
+  --text-2: #43515d;
+  --muted: #5f6c78;
+  --hairline: rgb(20 33 43 / 0.1);
+  --accent: #c0341d; /* 灯台の朱。いまいる場所の印だけに使う */
+
+  --sans: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --dot: "DotGothic16", "MS Gothic", monospace;
+
+  --bar: 56px; /* main.js も同じ値を読む */
+  --edge: 32px;
+  --copy-bottom: 20px; /* せまい画面で、文章の箱を画面の下からどれだけ離すか。main.js も読む */
+  --fade: 24px; /* 島の見える範囲の端で、絵がうすれて消える幅。main.js も読む */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/28px var(--sans);
+}
+
+h1, h2, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+/* 見出しへ移したフォーカスは、キーボードで操作しているときだけ枠を出す */
+.copy :is(h1, h2):focus:not(:focus-visible) { outline: none; }
+
+.skip {
+  position: fixed; left: 16px; top: -64px; z-index: 30;
+  height: 40px; padding: 0 16px; border-radius: 8px;
+  display: flex; align-items: center;
+  background: var(--text); color: #fff; font-weight: 500; text-decoration: none;
+}
+.skip:focus { top: 8px; }
+
+/* ---------- 上の帯 ---------- */
+
+.bar {
+  position: fixed; inset: 0 0 auto; z-index: 20; height: var(--bar);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 var(--edge);
+}
+.mark { margin-right: auto; font: 400 18px/24px var(--dot); text-decoration: none; }
+.bar ul { display: flex; gap: 4px; }
+.bar li a {
+  display: flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 12px; border-radius: 8px;
+  color: var(--text-2); text-decoration: none; white-space: nowrap;
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.bar li a:hover { background: var(--raised); color: var(--text); }
+.bar li a[aria-current] { color: var(--text); font-weight: 500; }
+/* いまいる場所の印。四角い1ドット */
+.bar li a::before { content: ""; width: 6px; height: 6px; background: transparent; }
+.bar li a[aria-current]::before { background: var(--accent); }
+.count { display: none; font: 400 13px/20px var(--dot); color: var(--muted); font-variant-numeric: tabular-nums; }
+.menu-button {
+  display: none; align-items: center; height: 40px; padding: 0 16px;
+  border: 1px solid var(--hairline); border-radius: 8px; background: var(--raised);
+  font-weight: 500; cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+.menu-button:hover, .menu-button[aria-expanded="true"] { background: var(--card); }
+
+/* ---------- 島 ---------- */
+
+/* JavaScript がないと島は描けないので、そのときは置き場所ごと出さない */
+.stage { display: none; position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+/* 輪切りが離れると、島は上下へ画面の外まで伸びる。上の帯の下端から --mask-bottom（main.js が決める。
+   せまい画面では文章の上）の手前までを見える範囲にして、その外では絵をうすれさせる。
+   上は帯の下端をはさむ 16px（メニューの文字にはかからず、島の置き場所にも入らない幅）で、
+   下は --mask-bottom までの --fade の幅で消える。広い画面では --mask-bottom が画面の外にあり、
+   下は画面の端でそのまま切れる */
+.js .stage {
+  display: block;
+  --mask: linear-gradient(to bottom,
+    transparent calc(var(--bar) - 8px), #000 calc(var(--bar) + 8px),
+    #000 calc(var(--mask-bottom, 200vh) - var(--fade)), transparent var(--mask-bottom, 200vh));
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
+}
+/* 大きさは内部の画面のまま（1ドット = 1px）。位置と倍率は main.js が transform で決める */
+.stage canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; image-rendering: pixelated; }
+.stage canvas.is-pointing { cursor: pointer; }
+
+/* ---------- 文章 ---------- */
+
+/* 箱の幅で中のボタンの詰めかたを変えるので、幅を測れる入れものにする（下の @container） */
+.copy { display: grid; gap: 16px; justify-items: start; max-width: 400px; container-type: inline-size; }
+.copy h1 { font: 400 64px/72px var(--dot); }
+.copy h2 { font: 400 40px/48px var(--dot); }
+.copy p { max-width: 36rem; text-wrap: pretty; }
+/* しくみの場面では、描きかたの表示の説明に入れ替わる。長さが変わっても行を増やさない（.copy p より後ろに書く） */
+.copy .dims {
+  font: 400 13px/20px var(--dot); color: var(--muted); font-variant-numeric: tabular-nums; min-height: 20px;
+  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.lead { font-size: 17px; line-height: 32px; color: var(--text-2); }
+.copy p a { text-decoration-color: var(--muted); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.copy p a:hover { text-decoration-color: var(--accent); }
+.credit { font-size: 13px; line-height: 24px; color: var(--muted); }
+
+.btn {
+  display: inline-flex; align-items: center; height: 44px; padding: 0 20px; margin-top: 8px;
+  border-radius: 8px; background: var(--text); color: #fff;
+  font-weight: 500; text-decoration: none;
+  transition: background-color 150ms var(--ease), transform 150ms var(--ease);
+}
+.btn:hover { background: var(--button-hover); }
+.btn:active { transform: scale(0.98); }
+
+/* 次へ進むボタンと、表示を切りかえるボタンを並べる行 */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.actions .btn { margin-top: 0; }
+/* 表示を切りかえるボタン。左の四角が、入っているときに塗りつぶされる。
+   名前は span 1つにまとめてある（ばらすと、四角との間隔 gap が名前の途中にも入る） */
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px;
+  border: 1px solid var(--hairline); border-radius: 8px; background: var(--raised);
+  font-weight: 500; white-space: nowrap; cursor: pointer;
+  transition: background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+.toggle::before { content: ""; width: 8px; height: 8px; border: 1px solid var(--text-2); }
+/* 触れたときは枠だけ濃くする。地の色は、入っているかどうかの印に取っておく */
+@media (hover: hover) { .toggle:hover { border-color: var(--muted); } }
+.toggle[aria-pressed="true"] { border-color: var(--text); background: var(--card); }
+.toggle[aria-pressed="true"]::before { border-color: var(--text); background: var(--text); }
+html:not(.js) .toggle { display: none; } /* 島を描けないときは、切りかえるものがない */
+/* 文章の箱が細いとき：ボタン3つが1行に並ぶように詰める。まず余白を、さらに細ければ名前も
+   （「描く」をはぶいて「順番」「範囲」にする。読み上げの名前は aria-label が持つ） */
+@container (max-width: 335px) {
+  .toggle { padding: 0 12px; }
+}
+@container (max-width: 311px) {
+  .actions { gap: 4px; }
+  .actions .btn { padding: 0 12px; }
+  .toggle { gap: 4px; padding: 0 8px; }
+  .toggle .long { display: none; }
+}
+
+.notice { padding: 16px var(--edge) 0; color: var(--text-2); }
+
+/* ---------- JavaScript なし：ふつうの縦長ページとして読める ---------- */
+
+.stop { padding: 64px var(--edge) 0; }
+.stop:last-child { padding-bottom: 96px; }
+html:not(.js) .bar { position: static; height: auto; min-height: var(--bar); flex-wrap: wrap; padding-block: 12px; }
+html:not(.js) .bar ul { flex-wrap: wrap; }
+
+/* ---------- JavaScript あり：画面は固定 ----------
+   区間（.stop）はスクロールの長さだけを作り、文章は同じ場所に重ねて、いまいる区間のものだけ見せる。
+   高さ = 次の場面へ着くまでにスクロールする量。svh のない環境のために vh を先に書く */
+.js .stop { height: 240vh; height: 240svh; padding: 0; } /* 建物が1つ建つ */
+.js #cover { height: 380vh; height: 380svh; } /* 半周しながら、輪切りが下から離れる */
+.js #slices { height: 460vh; height: 460svh; } /* 下から重なりなおし、灯台が建つ */
+.js #tree { height: 300vh; height: 300svh; } /* できあがった島を1周する */
+.js .stop:last-child { height: 100vh; height: 100svh; }
+.js .copy {
+  position: fixed; z-index: 10;
+  /* 箱を 4px 広げて同じだけ内側に余白を取る。はみ出しを切る箱なので、フォーカスの枠が切れないように */
+  padding: 4px;
+  left: calc(max(var(--edge), 8vw) - 4px); top: calc(50% + var(--bar) / 2);
+  width: calc(min(400px, 34vw) + 8px); max-width: none;
+  max-height: calc(100vh - var(--bar) - 32px); max-height: calc(100svh - var(--bar) - 32px);
+  overflow-y: auto;
+  transform: translateY(-50%) translateY(8px);
+  opacity: 0; pointer-events: none;
+  /* 去るときは速く。遠くへ飛ぶとき、通りすぎる場面の文章が重なって見えないように */
+  transition: opacity 120ms var(--ease), transform 120ms var(--ease);
+}
+.js .stop.is-current .copy {
+  opacity: 1; pointer-events: auto; transform: translateY(-50%);
+  /* 来るときは少し待ってから。通りすぎるだけの場面は出てこない */
+  transition: opacity 320ms var(--ease) 160ms, transform 320ms var(--ease) 160ms;
+}
+/* 開いた直後、島を組み立てているあいだも表紙の文章は読める（# なしで開いたとき。index.html が印をつけ、main.js が外す） */
+.js.at-cover #cover .copy { opacity: 1; pointer-events: auto; transform: translateY(-50%); transition: none; }
+
+/* ---------- せまい画面：島が上、文章が下。場所の一覧はボタンにたたむ ----------
+   横長の画面は島の置き場所の高さが足りなくなるので、幅 640px から左右に並べる。main.js も同じ条件を見る */
+
+@media (max-width: 831px) and (orientation: portrait), (max-width: 639px) {
+  :root { --edge: 20px; }
+  .js .count { display: block; }
+  .copy h1 { font-size: 40px; line-height: 48px; }
+  .copy h2 { font-size: 32px; line-height: 40px; }
+  .copy { gap: 12px; }
+  .lead { font-size: 15px; line-height: 28px; }
+
+  .js .menu-button { display: inline-flex; }
+  .js .bar ul {
+    display: none; position: absolute; right: var(--edge); top: calc(var(--bar) - 4px);
+    flex-direction: column; gap: 0; min-width: 160px; padding: 4px;
+    border: 1px solid var(--hairline); border-radius: 12px; background: var(--card);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.06);
+  }
+  .js .bar ul.is-open { display: flex; }
+  .js .bar li a { height: 40px; }
+
+  .js .copy {
+    left: calc(var(--edge) - 4px); right: calc(var(--edge) - 4px); top: auto; bottom: var(--copy-bottom); width: auto;
+    max-height: 52vh; max-height: 52svh;
+    transform: translateY(8px);
+  }
+  .js .stop.is-current .copy, .js.at-cover #cover .copy { transform: none; }
+}
+
+/* ---------- 背の低い画面（せまい画面では 760px 以下から）：文字を詰めて、島の置き場所を広く取る ----------
+   せまい画面の指定より後ろに書いて、こちらを勝たせる */
+
+@media (max-height: 560px), (max-width: 831px) and (max-height: 760px) {
+  body { font-size: 14px; line-height: 24px; }
+  .btn, .toggle { height: 40px; }
+  .btn, .actions { margin-top: 0; }
+  .copy { gap: 8px; }
+  .copy h1 { font-size: 40px; line-height: 48px; }
+  .copy h2 { font-size: 32px; line-height: 40px; }
+  .lead { font-size: 14px; line-height: 24px; }
+}
+
+/* ---------- 背が低く、幅もせまい横長の画面：文章の箱が細くて低いので、見出しを小さくする ---------- */
+
+@media (max-height: 560px) and (max-width: 767px) and (orientation: landscape) {
+  .copy h1 { font-size: 32px; line-height: 40px; }
+  .copy h2 { font-size: 24px; line-height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js .copy, .js .stop.is-current .copy, .btn, .toggle, .bar li a, .menu-button { transition: none; }
+}
